@@ -83,6 +83,29 @@ claude plugin install --scope user mempalace
 | **喚醒 AI** | `mempalace wake-up` | 輸出約 170 tokens 關鍵事實，直接貼入系統提示詞 |
 | **AI 自動調用** | （無需指令） | 連線 MCP 後，AI 自動執行搜尋工具 |
 
+### 🧩 Obsidian CLI（Windows / PowerShell）
+
+本專案提供 `scripts/obsidian-cli.ps1`，以**純檔案模式**直接操作 Obsidian vault（不需 API Key）。
+
+1. 設定 vault 路徑環境變數（若未設定，預設使用 `D:\github\chiisen\JoObsidian`）：
+
+```powershell
+$env:OBSIDIAN_VAULT_PATH = "D:\github\chiisen\JoObsidian"
+```
+
+2. 執行範例：
+
+```powershell
+# 讀取筆記
+.\scripts\obsidian-cli.ps1 read "Daily/2026-04-09.md"
+
+# 建立/覆寫筆記
+.\scripts\obsidian-cli.ps1 create "Inbox/Test.md" -Content "# Hello from CLI"
+
+# 搜尋關鍵字
+.\scripts\obsidian-cli.ps1 search "BAM"
+```
+
 ### 🏗️ 記憶宮殿架構
 
 MemPalace 採用五層階層式儲存結構：
