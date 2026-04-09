@@ -87,7 +87,22 @@ claude plugin install --scope user mempalace
 
 Obsidian CLI 相關安裝與使用方式（Windows / macOS）已整理至：
 
-- [docs/OBSIDIAN_CLI.md](docs/OBSIDIAN_CLI.md)
+- [📖 docs/OBSIDIAN_CLI.md](docs/OBSIDIAN_CLI.md) — **快速使用指南**：支援指令、安裝步驟、Windows/macOS 雙平台範例
+- [📝 docs/OBSIDIAN_CLI_SETUP_LOG.md](docs/OBSIDIAN_CLI_SETUP_LOG.md) — **設定與問題解決日誌**：從 Marketplace 安裝、Web API 方案探索、vault 路徑發現等完整歷程
+- [🔧 docs/OBSIDIAN_CLI_OPERATION_LOG.md](docs/OBSIDIAN_CLI_OPERATION_LOG.md) — **操作紀錄**：Windows PowerShell 環境實作、純檔案模式建置、BAM 搜尋測試通過
+
+### 📁 docs 目錄文件總覽
+
+本專案的 `docs/` 目錄包含以下文件：
+
+| 檔案 | 說明 |
+|:---|:---|
+| [📖 OBSIDIAN_CLI.md](docs/OBSIDIAN_CLI.md) | Obsidian CLI 快速使用指南（Windows/macOS 雙平台） |
+| [📝 OBSIDIAN_CLI_SETUP_LOG.md](docs/OBSIDIAN_CLI_SETUP_LOG.md) | Obsidian CLI 設定歷程與問題排查完整紀錄 |
+| [🔧 OBSIDIAN_CLI_OPERATION_LOG.md](docs/OBSIDIAN_CLI_OPERATION_LOG.md) | Obsidian CLI Windows 環境操作紀錄與測試結果 |
+| [🧩 CODEX_PLUGIN_SETUP_LOG.md](docs/CODEX_PLUGIN_SETUP_LOG.md) | OpenAI Codex Plugin 於 Claude Code 的安裝、設定與指令參考 |
+| [🏛️ mempalace.yaml](docs/mempalace.yaml) | 宮殿 Wing/Room 組態設定（目前設定：wing=docs, room=general） |
+| [📋 entities.json](docs/entities.json) | 知識圖譜實體資料（people / projects 清單） |
 
 ### 🏗️ 記憶宮殿架構
 
