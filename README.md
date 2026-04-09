@@ -1077,6 +1077,63 @@ pytest
 
 記憶宮殿資料夾包含 ChromaDB 與 SQLite 檔案，直接複製整個資料夾即可備份。
 
+### Q：可以將記憶宮殿共享到其他電腦嗎？
+
+**可以！** MemPalace 的資料庫完全支援跨電腦遷移與共享。
+
+#### 📦 資料庫結構
+
+MemPalace 使用兩種資料庫：
+
+| 資料庫 | 用途 | 檔案位置 |
+|:---|:---|:---|
+| **ChromaDB** | 向量資料庫（語意記憶） | `~/.mempalace/palace/chroma.sqlite3` |
+| **SQLite** | 知識圖譜（時序實體關係） | `~/.mempalace/knowledge_graph.sqlite3` |
+
+#### 🔄 共享方式
+
+##### 方法 1：直接複製整個宮殿資料夾（推薦）
+
+```bash
+# 在原始電腦打包
+tar -czf mempalace_backup.tar.gz ~/.mempalace/
+
+# 傳輸到新電腦後解壓
+tar -xzf mempalace_backup.tar.gz -C ~/
+```
+
+或使用 `rsync`（適合區域網路）：
+```bash
+rsync -avz ~/.mempalace/ user@new-computer:~/.mempalace/
+```
+
+##### 方法 2：使用匯出功能
+
+```bash
+# 匯出為 JSON 或 Markdown
+mempalace export
+```
+
+匯出後可在新電腦重新匯入：
+```bash
+mempalace import <exported_file.json>
+```
+
+#### ⚠️ 遷移注意事項
+
+1. **路徑設定**：新電腦需更新 `MEMPALACE_HOME` 環境變數或 `.mcp.json` 設定
+2. **MCP 設定**：若使用 Claude Code 或其他 MCP 客戶端，需更新 Python 路徑（可能因環境而異）
+3. **版本相容性**：確保新電腦的 MemPalace 版本相同或更新
+
+#### 📋 遷移檢查清單
+
+- [ ] 複製 `~/.mempalace/` 整個資料夾
+- [ ] 在新電腦安裝相同版本的 MemPalace（`pip install mempalace`）
+- [ ] 更新 `.mcp.json` 或 MCP 設定中的路徑
+- [ ] 執行 `mempalace status` 驗證資料完整性
+- [ ] 測試搜尋功能（`mempalace search "test"`）
+- [ ] 確認 MCP 工具正常運作（若使用 Claude Code）
+
 ### Q：可以匯出記憶嗎？
 
 可以使用 `mempalace export` 指令將記憶匯出為 JSON 或 Markdown 格式。
