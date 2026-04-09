@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "mempalace": {
+      "command": "/Users/liao-eli/.local/pipx/venvs/mempalace/bin/python",
+      "args": ["-m", "mempalace.mcp_server"],
+      "env": {
+        "MEMPALACE_HOME": "/Users/liao-eli/.mempalace"
+      }
+    }
+  }
+}

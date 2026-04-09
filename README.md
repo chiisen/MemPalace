@@ -125,6 +125,532 @@ mempalace wake-up
 
 此指令會輸出約 **170 tokens** 的關鍵事實（L0+L1 層級），可直接貼入 Local LLM 的系統提示詞中，讓 AI 快速「想起」重要資訊。
 
+### 🧪 MemPalace MCP 完整安裝與測試指南（2026-04-09）
+
+#### 0) 環境資訊
+
+| 項目 | 規格 |
+|:---|:---|
+| **OS** | macOS 25.3.0 (Tahoe) |
+| **Python** | 3.x |
+| **MemPalace 版本** | 3.0.14 |
+| **Claude Code** | 2.1.97+ |
+| **測試時間** | 2026-04-09 |
+
+---
+
+#### 1) 安裝 MemPalace 套件
+
+##### 1-1 系統環境檢查
+
+```bash
+# 檢查 Python 版本
+python3 --version  # 需要 3.9+
+
+# 檢查 pip 是否正常
+pip --version
+```
+
+##### 1-2 安裝 MemPalace（推薦使用虛擬環境）
+
+```bash
+# 若使用 pyenv（推薦）
+pyenv shell 3.11.9    # 或任何支援的版本
+
+# 若使用 venv
+python3 -m venv ~/.venv-mempalace
+source ~/.venv-mempalace/bin/activate
+
+# 安裝 MemPalace
+pip install mempalace
+
+# 驗證安裝
+mempalace --version    # 應顯示 3.0.14 或更新版本
+```
+
+##### 1-3 初始化宮殿
+
+```bash
+# 建立宮殿資料夾（第一次執行）
+mempalace init ~/.mempalace
+
+# 檢查狀態
+mempalace status
+```
+
+**預期輸出示例**：
+```
+=======================================================
+  MemPalace Status — 22 drawers
+=======================================================
+
+  WING: mempalace_docs
+    ROOM: general                 22 drawers
+
+=======================================================
+```
+
+---
+
+#### 2) Claude Code 整合設定
+
+##### 2-1 檢查 Claude Code 支援的 MCP 伺服器列表
+
+```bash
+# 列出已知的 MCP 伺服器
+ls -la ~/.claude/mcp-servers.json 2>/dev/null || echo "檔案不存在，需要手動建立"
+```
+
+##### 2-2 設定 Claude Code MCP（使用 `.mcp.json`）
+
+在**專案根目錄**建立 `.mcp.json`：
+
+```json
+{
+  "mcpServers": {
+    "mempalace": {
+      "command": "/Users/liao-eli/.local/pipx/venvs/mempalace/bin/python",
+      "args": ["-m", "mempalace.mcp_server"],
+      "env": {
+        "MEMPALACE_HOME": "/Users/liao-eli/.mempalace"
+      }
+    }
+  }
+}
+```
+
+**文件位置**：
+```
+MemPalace/
+├── .mcp.json          ← 在這裡
+├── README.md
+├── src/
+└── ...
+```
+
+> **重要**：
+> - Claude Code **不支援在 `settings.json` 中直接設定 MCP servers**
+> - 必須使用 `.mcp.json`（由 Claude Code 自動識別）
+> - `command` 應為完整絕對路徑（特別是 pipx 環境）
+> - `MEMPALACE_HOME` 指向宮殿所在路徑
+
+##### 2-3 驗證 MCP 連線
+
+1. **完全重啟 Claude Code**（不只是關閉窗口）
+2. **打開新 Session**
+3. **在 Claude Code 中測試 MCP 工具**（AI 會自動調用）
+
+或使用 CLI 驗證基礎狀態：
+```bash
+mempalace status      # 確認宮殿正常
+```
+
+**預期結果**：Claude Code 重啟後，mempalace MCP 工具應自動可用。
+
+---
+
+#### 3) CLI 功能全面測試
+
+##### 3-1 查詢宮殿狀態
+
+```bash
+mempalace status
+```
+
+**預期輸出**：Wing 數量、Room 數量、總 Drawers 數。
+
+##### 3-2 語義搜尋（基礎）
+
+```bash
+mempalace search "codex:setup"
+```
+
+**預期輸出**：命中的相關記憶 + 相似度分數。
+
+##### 3-3 語義搜尋（進階過濾）
+
+```bash
+# 限定專案範圍
+mempalace search "Laravel" --wing mempalace_docs --results 3
+
+# 限定房間範圍
+mempalace search "Vue" --room general --results 2
+```
+
+**支援參數**：
+- `--wing <name>`：限定特定 Wing（人/專案）
+- `--room <name>`：限定特定 Room（主題）
+- `--results <n>`：限制回傳筆數（預設 20）
+
+##### 3-4 快速喚醒（生成上下文摘要）
+
+```bash
+mempalace wake-up
+```
+
+**預期輸出**：~800+ tokens 的關鍵事實摘要，含以下層級：
+- **L0 — IDENTITY**：身份識別（若已設定）
+- **L1 — ESSENTIAL STORY**：核心故事（最重要的記憶）
+- **L2 & L3**：擴展事實與細節
+
+**用途**：可直接複製貼到 AI 系統提示詞中快速恢復上下文。
+
+##### 3-5 壓縮記憶（預覽模式）
+
+```bash
+mempalace compress --dry-run
+```
+
+**預期輸出**：
+- 每個 Drawer 的原始 Token 數與壓縮後 Token 數
+- 整體壓縮倍率（示例：5.4x）
+- **不實際儲存任何檔案**
+
+**實際壓縮**（非預覽）：
+```bash
+mempalace compress
+```
+
+---
+
+#### 4) 實測結果總結
+
+| 功能 | CLI | MCP | 狀態 | 備註 |
+|:---|:---:|:---:|:---|:---|
+| **status** | ✅ | ✅ | 正常 | 22 drawers 已加載 |
+| **search** | ✅ | ✅ | 正常 | 語義搜尋精準度高 |
+| **wake-up** | ✅ | ⭕ | 正常 | CLI 專用，生成 ~826 tokens |
+| **compress** | ✅ | ⭕ | 正常 | 平均 5.4x 壓縮率 |
+| **split** | ✅ | ⭕ | 就緒 | 用於拆分大型對話檔 |
+
+> ⭕ = 工具於 Claude Code 不可用（已排除或 CLI 專用）
+
+---
+
+#### 5) 測試過程中遇到的問題與解決方案
+
+##### 問題 A：MCP 工具未被 Claude Code 識別
+
+**症狀**：
+- 設定了 `settings.json`，但 Claude Code 仍無法呼叫 mempalace 工具。
+
+**原因**：
+- MCP 伺服器設定需在 Claude Code 啟動時載入。
+- `settings.json` 變更後未重啟 session。
+
+**解決方案**：
+1. 確認 `~/.claude/settings.json` 已正確設定 `mempalace` server。
+2. **完全重啟 Claude Code**（不是只關視窗）。
+3. 開啟新對話或 session。
+4. 測試 `mempalace status` 命令。
+
+##### 問題 B：Python 找不到 mempalace 模組
+
+**症狀**：
+```
+ModuleNotFoundError: No module named 'mempalace'
+```
+
+**原因**：
+- MemPalace 安裝在不同的 Python 環境（venv / pyenv）。
+- Claude Code 使用的 Python 未包含 mempalace。
+
+**解決方案**：
+1. 確認 `mempalace --version` 可正常執行。
+2. 查詢 MemPalace 的實際路徑：
+   ```bash
+   which mempalace
+   # 或找到 Python 模組路徑
+   python3 -c "import mempalace; print(mempalace.__file__)"
+   ```
+3. 在 `settings.json` 中指定完整 Python 路徑：
+   ```json
+   "command": "/Users/liao-eli/.pyenv/versions/3.11.9/bin/python"
+   ```
+
+##### 問題 C：宮殿資料夾路徑設定錯誤
+
+**症狀**：
+- `mempalace status` 回傳空白或「0 drawers」。
+
+**原因**：
+- `MEMPALACE_HOME` 環境變數指向錯誤位置。
+- 宮殿初始化失敗。
+
+**解決方案**：
+1. 確認宮殿存在：
+   ```bash
+   ls -la ~/.mempalace
+   ```
+2. 若不存在，重新初始化：
+   ```bash
+   mempalace init ~/.mempalace
+   ```
+3. 在 `settings.json` 中設定正確路徑（用絕對路徑）。
+
+##### 問題 D：搜尋結果為空或相似度異常低
+
+**症狀**：
+- `mempalace search "query"` 回傳 0 筆結果或相似度 > 0.5。
+
+**原因**：
+- 記憶向量化尚未完成（新安裝）。
+- 搜尋詞過於特異。
+
+**解決方案**：
+1. 若新安裝，先使用 `mempalace mine` 匯入內容：
+   ```bash
+   mempalace mine /path/to/project --mode files
+   ```
+2. 嘗試更通用的搜尋詞。
+3. 檢查 ChromaDB 是否正常初始化：
+   ```bash
+   ls -la ~/.mempalace/chroma/  # 應有 .db 檔案
+   ```
+
+##### 問題 E：「加 Marketplace」但插件未出現
+
+**症狀**：
+```bash
+/plugin marketplace add milla-jovovich/mempalace
+# 執行後，/mempalace 指令仍不存在
+```
+
+**原因**：
+- `marketplace add` 只是登記來源，不是安裝插件本身。
+
+**解決方案**：
+```bash
+# 第一步：登記 Marketplace
+/plugin marketplace add milla-jovovich/mempalace
+
+# 第二步：從 Marketplace 安裝插件
+/plugin install mempalace@milla-jovovich
+
+# 第三步：重載插件
+/reload-plugins
+
+# 第四步：驗證
+/skills  # 應看到 mempalace:* 指令
+```
+
+##### 問題 F：MCP 伺服器啟動時找不到 Python 模組
+
+**症狀**：
+```
+❌ ModuleNotFoundError: No module named 'mempalace'
+```
+或 Claude Code 重啟後仍無法呼叫 mempalace MCP 工具。
+
+**原因**：
+- MemPalace 通常使用 **pipx** 安裝（隔離的虛擬環境）。
+- MCP 伺服器設定中的 `command` 若指向系統 `python3`，無法找到 pipx venv 內的模組。
+- `.mcp.json` 或 `settings.json` 中的 Python 路徑不正確。
+
+**排查步驟**：
+
+1. 確認 mempalace 安裝方式：
+```bash
+which mempalace
+# 若輸出類似 /Users/xxx/.local/bin/mempalace，則為 pipx 安裝
+```
+
+2. 查詢 pipx venv 的 Python 路徑：
+```bash
+head -1 /Users/xxx/.local/bin/mempalace
+# 輸出形如：#!/Users/xxx/.local/pipx/venvs/mempalace/bin/python
+# 這就是正確的 Python 路徑
+```
+
+**解決方案**：
+
+在 `.mcp.json` 中使用完整 pipx Python 路徑：
+
+```json
+{
+  "mcpServers": {
+    "mempalace": {
+      "command": "/Users/liao-eli/.local/pipx/venvs/mempalace/bin/python",
+      "args": ["-m", "mempalace.mcp_server"],
+      "env": {
+        "MEMPALACE_HOME": "/Users/liao-eli/.mempalace"
+      }
+    }
+  }
+}
+```
+
+> **說明**：
+> - `.mcp.json` 位於專案根目錄，由 Claude Code 自動識別
+> - Claude Code **不支援在 `settings.json` 中直接設定 MCP servers**
+> - `command` 必須為完整絕對路徑
+
+**驗證**：
+
+```bash
+# 測試該 Python 環境是否能載入 mempalace
+/Users/liao-eli/.local/pipx/venvs/mempalace/bin/python -c "import mempalace; print('✅')"
+```
+
+---
+
+#### 6) 健康檢查清單
+
+每次環境異動後，依序執行以下檢查：
+
+- [ ] **CLI 環境**：`mempalace status` 顯示 drawers 數 > 0
+- [ ] **宮殿搜尋**：`mempalace search "test"` 回傳結果（相似度 < 0.3）
+- [ ] **向量資料庫**：`ls ~/.mempalace/chroma/` 確認 .db 檔存在
+- [ ] **`.mcp.json` 設定**：專案根目錄存在且路徑正確
+- [ ] **Python 模組**：
+  ```bash
+  # 若使用 pipx：
+  /Users/liao-eli/.local/pipx/venvs/mempalace/bin/python -c "import mempalace; print('✅')"
+  ```
+- [ ] **MCP 連線**（Claude Code）：
+  - 完全重啟 Claude Code
+  - 開新 Session
+  - 測試 mempalace MCP 工具可否呼叫
+
+---
+
+#### 7) `.mcp.json` 設定示例
+
+> ⚠️ **重要**：Claude Code **不支援在 `settings.json` 中直接設定 MCP servers**。
+> 必須使用專案根目錄的 `.mcp.json` 檔案。
+
+##### 組合 1：pipx 安裝（推薦）
+
+```json
+{
+  "mcpServers": {
+    "mempalace": {
+      "command": "/Users/liao-eli/.local/pipx/venvs/mempalace/bin/python",
+      "args": ["-m", "mempalace.mcp_server"],
+      "env": {
+        "MEMPALACE_HOME": "/Users/liao-eli/.mempalace"
+      }
+    }
+  }
+}
+```
+
+**位置**：`.mcp.json`（專案根目錄）
+
+**優點**：
+- pipx 提供隔離的虛擬環境
+- 自動處理依賴版本衝突
+- 易於更新與卸載
+
+**查詢 pipx Python 路徑**：
+```bash
+head -1 /Users/liao-eli/.local/bin/mempalace
+# 輸出的 #! 後面就是完整路徑
+```
+
+##### 組合 2：系統 Python（簡單但不推薦）
+
+```json
+{
+  "mcpServers": {
+    "mempalace": {
+      "command": "python3",
+      "args": ["-m", "mempalace.mcp_server"]
+    }
+  }
+}
+```
+
+適用於 `pip install mempalace` 至系統全域時。
+> ⚠️ 易產生依賴衝突，建議優先使用 pipx。
+
+##### 組合 3：pyenv 隔離環境
+
+```json
+{
+  "mcpServers": {
+    "mempalace": {
+      "command": "/Users/liao-eli/.pyenv/versions/3.11.9/bin/python",
+      "args": ["-m", "mempalace.mcp_server"],
+      "env": {
+        "MEMPALACE_HOME": "/Users/liao-eli/.mempalace"
+      }
+    }
+  }
+}
+```
+
+適用於多 Python 版本環境時。
+
+##### 組合 4：venv 虛擬環境
+
+```json
+{
+  "mcpServers": {
+    "mempalace": {
+      "command": "/Users/liao-eli/.venv-mempalace/bin/python",
+      "args": ["-m", "mempalace.mcp_server"],
+      "env": {
+        "MEMPALACE_HOME": "/Users/liao-eli/.mempalace"
+      }
+    }
+  }
+}
+```
+
+適用於需要完全隔離依賴的情況。
+
+---
+
+#### 8) 進階調試
+
+##### 手動啟動 MCP 伺服器（觀察錯誤）
+
+若使用 pipx 安裝：
+
+```bash
+/Users/liao-eli/.local/pipx/venvs/mempalace/bin/python \
+  -m mempalace.mcp_server
+```
+
+或直接測試模組載入：
+
+```bash
+/Users/liao-eli/.local/pipx/venvs/mempalace/bin/python << 'EOF'
+import sys
+print(f"Python: {sys.executable}")
+print(f"Version: {sys.version}")
+
+try:
+    import mempalace
+    print("✅ mempalace 模組載入成功")
+    from mempalace.mcp_server import main
+    print("✅ MCP server 可用")
+except ImportError as e:
+    print(f"❌ 模組錯誤: {e}")
+    sys.exit(1)
+EOF
+```
+
+##### Claude Code MCP 除錯
+
+1. **確認 `.mcp.json` 存在**：
+   ```bash
+   cat ./mcp.json  # 在專案根目錄執行
+   ```
+
+2. **驗證 Python 路徑**：
+   ```bash
+   /Users/liao-eli/.local/pipx/venvs/mempalace/bin/python --version
+   ```
+
+3. **測試模組呼叫**（見上方示例）
+
+4. **重啟 Claude Code**：
+   - 完全關閉（不只是視窗最小化）
+   - 重新打開
+   - 打開新 Session
+
 ---
 
 ## ⚙️ 進階功能
