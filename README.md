@@ -91,6 +91,47 @@ Obsidian CLI 相關安裝與使用方式（Windows / macOS）已整理至：
 - [📝 docs/OBSIDIAN_CLI_SETUP_LOG.md](docs/OBSIDIAN_CLI_SETUP_LOG.md) — **設定與問題解決日誌**：從 Marketplace 安裝、Web API 方案探索、vault 路徑發現等完整歷程
 - [🔧 docs/OBSIDIAN_CLI_OPERATION_LOG.md](docs/OBSIDIAN_CLI_OPERATION_LOG.md) — **操作紀錄**：Windows PowerShell 環境實作、純檔案模式建置、BAM 搜尋測試通過
 
+### 🩺 MCP 狀態檢查指令
+
+快速確認 MemPalace MCP 伺服器是否正常運作：
+
+```bash
+mempalace-mcp-status
+# 或專案內路徑
+./scripts/mempalace-mcp-status.sh
+```
+
+**檢查項目**：
+1. 📦 Python 環境與模組載入
+2. 🔌 MCP Server 模組可用性
+3. 🏰 宮殿資料夾路徑
+4. 📊 ChromaDB 向量資料庫
+5. 🔗 MCP JSON-RPC 連線測試（實際初始化 + 工具列表查詢）
+6. 🛠️ 可用工具數量
+7. 📋 宮殿摘要（Wings / Rooms / Drawers / 路徑）
+
+**輸出範例**：
+```
+🏛️  MemPalace MCP 狀態檢查
+============================================================
+📦 Python 環境... ✅ OK
+🔌 MCP Server... ✅ OK
+🏰 宮殿路徑... ✅ /Users/liao-eli/.mempalace/palace
+📊 ChromaDB... ✅ OK (palace)
+🔗 MCP 連線測試... ✅ OK (v2.0.0)
+🛠️  可用工具數... ✅ 19 個工具
+
+📋 宮殿摘要
+------------------------------------------------------------
+  Wings:   1 (mempalace_docs)
+  Rooms:   1 (general)
+  Drawers: 22
+  Path:    /Users/liao-eli/.mempalace/palace
+
+============================================================
+✅ MemPalace MCP 運行正常
+```
+
 ### 📁 docs 目錄文件總覽
 
 本專案的 `docs/` 目錄包含以下文件：
