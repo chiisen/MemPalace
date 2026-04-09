@@ -152,7 +152,11 @@ case "$command" in
         fi
         note_path=$(get_note_path "$target")
         ensure_parent_dir "$note_path"
-        printf '%s' "$content" > "$note_path"
+        if [[ -n "$content" ]]; then
+            printf '%s' "$content" > "$note_path"
+        else
+            cat > "$note_path"
+        fi
         echo "已建立/覆寫：$target"
         ;;
 
