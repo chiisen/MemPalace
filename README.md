@@ -627,7 +627,7 @@ try:
     from mempalace.mcp_server import main
     print("✅ MCP server 可用")
 except ImportError as e:
-    print(f"❌ 模組錯誤: {e}")
+    print(f"❌ 模組錯誤：{e}")
     sys.exit(1)
 EOF
 ```
@@ -650,6 +650,233 @@ EOF
    - 完全關閉（不只是視窗最小化）
    - 重新打開
    - 打開新 Session
+
+---
+
+#### 9) OpenCode MCP 使用者層級設定（2026-04-09 更新）
+
+> **情境**：希望在所有專案中使用 MemPalace MCP，無需每個專案都設定 `.mcp.json`
+
+##### 9-1 背景說明
+
+**OpenCode** 是另一個 AI 編碼助手，其 MCP 設定方式與 Claude Code 不同：
+
+| 平台 | 設定檔位置 | 設定格式 |
+|:---|:---|:---|
+| **Claude Code** | `~/.claude/mcp.json` 或 `./.mcp.json` | `mcpServers` 物件 |
+| **OpenCode** | `~/.opencode/opencode.json` | `mcp` 物件 |
+
+##### 9-2 操作流程
+
+###### 步驟 1：檢查 OpenCode 設定檔
+
+```bash
+# 檢查 opencode 設定目錄
+ls -la ~/.opencode/
+
+# 查看現有 opencode.json
+cat ~/.opencode/opencode.json
+```
+
+###### 步驟 2：檢查現有 MCP 設定
+
+```bash
+# 查看現有 MCP 設定
+cat ~/.opencode/opencode.json | jq '.mcp'
+```
+
+**預期輸出**（若有其他 MCP 已設定）：
+```json
+{
+  "grepai": {
+    "type": "local",
+    "command": ["grepai", "mcp-serve"],
+    "enabled": true
+  }
+}
+```
+
+###### 步驟 3：加入 MemPalace MCP
+
+編輯 `~/.opencode/opencode.json`，在 `mcp` 區塊中加入：
+
+```json
+"mempalace": {
+  "type": "local",
+  "command": ["/Users/liao-eli/.local/pipx/venvs/mempalace/bin/python", "-m", "mempalace.mcp_server"],
+  "env": {
+    "MEMPALACE_HOME": "/Users/liao-eli/.mempalace"
+  },
+  "enabled": true
+}
+```
+
+**完整範例**：
+```json
+{
+  "$schema": "https://opencode.ai/config.json",
+  "provider": { ... },
+  "mcp": {
+    "grepai": {
+      "type": "local",
+      "command": ["grepai", "mcp-serve"],
+      "enabled": true
+    },
+    "mempalace": {
+      "type": "local",
+      "command": ["/Users/liao-eli/.local/pipx/venvs/mempalace/bin/python", "-m", "mempalace.mcp_server"],
+      "env": {
+        "MEMPALACE_HOME": "/Users/liao-eli/.mempalace"
+      },
+      "enabled": true
+    }
+  }
+}
+```
+
+###### 步驟 4：驗證設定
+
+```bash
+# 驗證 MCP 設定已加入
+cat ~/.opencode/opencode.json | jq '.mcp'
+```
+
+**預期輸出**：
+```json
+{
+  "grepai": { ... },
+  "mempalace": {
+    "type": "local",
+    "command": [...],
+    "env": { ... },
+    "enabled": true
+  }
+}
+```
+
+###### 步驟 5：測試 MemPalace MCP
+
+```bash
+# 測試 CLI 狀態
+mempalace status
+
+# 測試 Python 模組
+/Users/liao-eli/.local/pipx/venvs/mempalace/bin/python -c "import mempalace; print('✅')"
+
+# 測試 MCP Server import
+/Users/liao-eli/.local/pipx/venvs/mempalace/bin/python -c "from mempalace.mcp_server import main; print('✅')"
+```
+
+**預期結果**：全部顯示 ✅
+
+##### 9-3 設定層級差異
+
+| 位置 | 範圍 | 優先權 |
+|:---|:---|:---|
+| `~/.opencode/opencode.json` | **全域（所有專案）** | 低 |
+| `./.opencode.json`（專案根目錄） | 僅該專案 | **高**（會覆蓋全域） |
+
+> **建議**：將 MemPalace 設為使用者層級，所有專案即可共用，無需重複設定。
+
+##### 9-4 實測結果
+
+| 測試項目 | 狀態 | 結果 |
+|:---|:---:|:---|
+| **CLI 狀態** | ✅ | 22 drawers 已載入 |
+| **Python 模組** | ✅ | mempalace 模組正常 |
+| **MCP Server** | ✅ | 可正常 import |
+| **語意搜尋** | ✅ | 搜尋 "MCP" 回傳 3 筆結果 |
+| **OpenCode MCP** | ✅ | 設定檔已加入 |
+
+##### 9-5 遇到的問題與解決方案
+
+###### 問題 G：找不到 opencode 設定檔
+
+**症狀**：
+```bash
+cat ~/.opencode/opencode.json
+# 檔案不存在
+```
+
+**原因**：
+- opencode 尚未初始化
+- 設定檔位於其他位置
+
+**解決方案**：
+```bash
+# 檢查 opencode 目錄是否存在
+ls -la ~/.opencode/
+
+# 若目錄不存在，需先執行 opencode 初始化
+opencode init
+```
+
+###### 問題 H：MCP 設定格式錯誤
+
+**症狀**：
+- opencode 無法啟動 MCP
+- 錯誤訊息指向 JSON 格式問題
+
+**原因**：
+- JSON 語法錯誤（缺少逗號、括號不匹配）
+- 設定格式不符合 opencode 規範
+
+**解決方案**：
+```bash
+# 使用 jq 驗證 JSON 格式
+cat ~/.opencode/opencode.json | jq .
+
+# 若有錯誤，jq 會顯示錯誤行號
+```
+
+**正確格式要點**：
+- `command` 為**陣列格式**（非字串）
+- `env` 為物件格式
+- `enabled` 為布林值
+- 每個 MCP server 之間用逗號分隔
+
+###### 問題 I：pipx Python 路徑不正確
+
+**症狀**：
+```
+❌ ModuleNotFoundError: No module named 'mempalace'
+```
+
+**原因**：
+- `command` 中的 Python 路徑不正確
+- mempalace 安裝在不同的 Python 環境
+
+**解決方案**：
+```bash
+# 查詢正確的 pipx Python 路徑
+head -1 /Users/liao-eli/.local/bin/mempalace
+# 輸出：#!/Users/liao-eli/.local/pipx/venvs/mempalace/bin/python
+
+# 或使用 which 查詢
+which mempalace
+# 然後查看該腳本的 shebang 行
+```
+
+##### 9-6 完整健康檢查清單
+
+每次環境異動後，依序執行以下檢查：
+
+- [ ] **CLI 環境**：`mempalace status` 顯示 drawers 數 > 0
+- [ ] **宮殿搜尋**：`mempalace search "test"` 回傳結果（相似度 < 0.3）
+- [ ] **向量資料庫**：`ls ~/.mempalace/chroma/` 確認 .db 檔存在
+- [ ] **OpenCode 設定**：`~/.opencode/opencode.json` 存在且包含 mempalace
+- [ ] **Python 模組**：
+  ```bash
+  /Users/liao-eli/.local/pipx/venvs/mempalace/bin/python -c "import mempalace; print('✅')"
+  ```
+- [ ] **MCP Server**：
+  ```bash
+  /Users/liao-eli/.local/pipx/venvs/mempalace/bin/python -c "from mempalace.mcp_server import main; print('✅')"
+  ```
+- [ ] **OpenCode 重啟**：
+  - 完全關閉 opencode
+  - 重新打開
+  - 測試 mempalace MCP 工具可否呼叫
 
 ---
 
