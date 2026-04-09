@@ -106,6 +106,37 @@ $env:OBSIDIAN_VAULT_PATH = "D:\github\chiisen\JoObsidian"
 .\scripts\obsidian-cli.ps1 search "BAM"
 ```
 
+### 🧩 Obsidian CLI（macOS / zsh）
+
+本專案提供 `scripts/obsidian-cli.sh`，以**純檔案模式**直接操作 Obsidian vault（不需 API Key）。
+
+1. 一鍵安裝（會建立 `~/.local/bin/obsidian-note` 並寫入 shell 設定）：
+
+```bash
+./scripts/obsidian-cli.sh install
+source ~/.zshrc
+```
+
+2. 若要指定 vault 路徑：
+
+```bash
+./scripts/obsidian-cli.sh install "/Users/你的帳號/your-vault"
+source ~/.zshrc
+```
+
+3. 執行範例：
+
+```bash
+# 搜尋關鍵字
+obsidian-note search "BAM"
+
+# 讀取筆記
+obsidian-note read "Daily/2026-04-09.md"
+
+# 建立/覆寫筆記
+obsidian-note create "Inbox/Test.md" "# Hello from CLI"
+```
+
 ### 🏗️ 記憶宮殿架構
 
 MemPalace 採用五層階層式儲存結構：
