@@ -1,6 +1,20 @@
 # 🏛️ MemPalace - AI 記憶宮殿
 
-> **完全本地運行、免費的 AI 記憶系統** —— 目前基準測試中得分最高的 AI 記憶方案
+> **本機已停用（2026-11-10）。** 用到後期，讀取記憶的速度慢到無法日常使用，之後不打算再接這套件。下面安裝與 MCP 說明留作紀錄。
+
+## 停用原因
+
+實際使用的問題是讀取愈來愈慢，最後放棄。上游 GitHub 上同一類抱怨很多，慢點集中在 ChromaDB 的讀取路徑與索引。以下整理自 2026 年 4 月至 7 月的 issue 與討論，版本跨 3.0 到 3.6。本機當時文件記載的套件版本是 3.0.14，那些讀取路徑的修正多數還沒包含在內。
+
+常見的有三項：
+
+1. **總覽讀取掃完整個宮殿。** `status`、列出 wing/room、圖譜統計用 `col.get(limit, offset)` 把全部 metadata 分頁拉回 Python。18 萬筆約 3–4 分鐘，35 萬筆超過 120 秒。見 [#1379](https://github.com/MemPalace/mempalace/issues/1379)、[#1748](https://github.com/MemPalace/mempalace/issues/1748)。
+2. **用久了 HNSW 索引膨脹。** Chroma 1.5.x 在 mine 與 MCP 同時寫入時，索引會壞掉或 `link_lists.bin` 脹到數百 GB，搜尋又慢又不准。大約 1 萬到 5 萬個 drawer 以上才容易出現。見 [#344](https://github.com/MemPalace/mempalace/issues/344)、[#1091](https://github.com/MemPalace/mempalace/issues/1091)、[#1686](https://github.com/MemPalace/mempalace/discussions/1686)。
+3. **寫入時把讀取一起拖慢。** mine 對 metadata 做 WHERE 掃描時，同一顆宮殿上其他查詢的 p50 可從約 50ms 升到約 1.5 秒。見 [#1472](https://github.com/MemPalace/mempalace/issues/1472)、[#1984](https://github.com/MemPalace/mempalace/issues/1984)。
+
+本機沒有留下當時的 drawer 數量與單次耗時，所以對不上上面哪一項。停用的直接原因就是讀取慢到不能用。
+
+---
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Python 3.9+](https://img.shields.io/badge/Python-3.9+-blue.svg)](https://www.python.org/downloads/)

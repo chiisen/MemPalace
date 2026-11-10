@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- README 最上方記錄本機停用 MemPalace：後期讀取過慢，並附上社群回報的同類原因與出處。
+
 ### Security
 
 - 移除 `.claude/settings.local.json` 中高風險的命令白名單項目，包括任意 Python 執行、廣泛文件讀取以及敏感路徑存取，並清理冗餘項目。
